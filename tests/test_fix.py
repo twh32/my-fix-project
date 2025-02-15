@@ -1,7 +1,7 @@
 import unittest
 import simplefix
 import time
-from ..fix_core import build_order_message
+from fix_core import build_order_message
 
 class TestFixMessageFunctions(unittest.TestCase):
     def test_build_order_message(self):

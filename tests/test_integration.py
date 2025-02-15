@@ -3,8 +3,8 @@ import time
 import threading
 import simplefix
 import pytest
-from ..fix_core import build_order_message, reset_sequence
-from ..fix_server import server_thread, handle_client
+from fix_core import build_order_message, reset_sequence
+from fix_server import server_thread, handle_client
 
 HOST = "localhost"
 
