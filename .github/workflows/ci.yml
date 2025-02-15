@@ -22,7 +22,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install simplefix pytest
+        pip install simplefix pytest flask
 
     - name: Run tests
       run: |
