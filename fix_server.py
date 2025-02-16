@@ -3,11 +3,21 @@ import simplefix
 import threading
 import select
 import time
+import requests
 
-HEARTBEAT_INTERVAL = 5  # seconds
+from fix_core import build_order_message  # For building orders (if needed)
+from fix_transform import transform_fix_to_json  # Transformation logic
+
+# Set heartbeat interval (seconds)
+HEARTBEAT_INTERVAL = 5
+# URL of the internal API (adjust the port if necessary)
+INTERNAL_API_URL = "http://localhost:5001/orders"
 
 def build_execution_report(order_msg):
-    # (Same as before)
+    """
+    Build an Execution Report FIX message in response to an order message.
+    (This remains unchanged from before.)
+    """
     cl_ord_id = None
     msg_seq_num = None
     for tag, value in order_msg:
@@ -39,21 +49,40 @@ def send_heartbeat(conn):
     hb_msg.append_pair(8, "FIX.4.2")
     hb_msg.append_pair(35, "0")
     hb_msg.append_utc_timestamp(52)
-    conn.sendall(hb_msg.encode())
-    print("Sent Heartbeat.")
+    try:
+        conn.sendall(hb_msg.encode())
+        print("Sent Heartbeat.")
+    except Exception as e:
+        print("Error sending heartbeat:", e)
+
+def process_and_push_order(msg):
+    """
+    Transforms the FIX message into enriched data and pushes it to the internal API.
+    """
+    enriched_data = transform_fix_to_json(msg)
+    try:
+        response = requests.post(INTERNAL_API_URL, json=enriched_data)
+        if response.status_code == 200:
+            print("Enriched order pushed to API successfully.")
+        else:
+            print(f"Failed to push order to API. Status: {response.status_code}, Response: {response.text}")
+    except Exception as e:
+        print("Exception while pushing order to API:", e)
 
 def handle_client(conn, addr):
     print(f"Connected by {addr}")
     parser = simplefix.FixParser()
+    last_activity = time.time()
     try:
         while True:
-            # Wait for data with timeout equal to HEARTBEAT_INTERVAL.
+            # Wait for data with a timeout equal to HEARTBEAT_INTERVAL.
             rlist, _, _ = select.select([conn], [], [], HEARTBEAT_INTERVAL)
             if rlist:
                 data = conn.recv(4096)
                 if not data:
                     print(f"Client {addr} disconnected.")
                     break
+                last_activity = time.time()
                 parser.append_buffer(data)
                 while True:
                     msg = parser.get_message()
@@ -62,17 +91,18 @@ def handle_client(conn, addr):
                     print("Received FIX message:")
                     for tag, value in msg:
                         print(f"  Tag {tag}: {value}")
-                    # Send execution report for each received FIX order.
+                    # Send execution report for the FIX order.
                     response = build_execution_report(msg)
-                    conn.sendall(response)
+                    try:
+                        conn.sendall(response)
+                    except Exception as e:
+                        print("Error sending execution report:", e)
+                    # Process the FIX message and push it to the internal API.
+                    process_and_push_order(msg)
             else:
                 # Timeout reached; send heartbeat.
-                try:
-                    send_heartbeat(conn)
-                    print(f"Heartbeat sent to {addr}")
-                except Exception as e:
-                    print(f"Error sending heartbeat to {addr}: {e}")
-                    break
+                send_heartbeat(conn)
+                last_activity = time.time()
     except Exception as e:
         print(f"Error in handle_client for {addr}: {e}")
     finally:
@@ -94,4 +124,4 @@ def server_thread(host='localhost', port=5001):
         server_socket.close()
 
 if __name__ == '__main__':
-    server_thread()
+    server_thread(host='localhost', port=6000)
