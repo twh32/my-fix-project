@@ -71,3 +71,36 @@ def test_list_orders(client):
     assert data["status"] == "success"
     assert len(data["orders"]) == 1
     assert data["orders"][0]["order_id"] == "ORDER456"
+
+def test_delete_order_success(client):
+    # Post an order first.
+    sample_order = {
+        "order_id": "ORDER002",
+        "symbol": "STOCK_ABC",
+        "quantity": 200,
+        "price": 50.25,
+        "business_unit": "BU-001",
+        "trader_id": "TRADER001",
+        "risk_category": "LOW",
+        "processed_timestamp": "2025-02-14T12:30:00Z"
+    }
+    client.post("/orders", data=json.dumps(sample_order), content_type='application/json')
+    
+    # Delete the order.
+    response = client.delete("/orders/ORDER002")
+    data = response.get_json()
+    
+    assert response.status_code == 200
+    assert data["status"] == "success"
+    assert "deleted" in data["message"]
+    # Verify that the order store is empty.
+    assert len(orders) == 0
+
+def test_delete_order_not_found(client):
+    # Attempt to delete a non-existent order.
+    response = client.delete("/orders/NON_EXISTENT")
+    data = response.get_json()
+    
+    assert response.status_code == 404
+    assert data["status"] == "error"
+    assert "not found" in data["message"]
