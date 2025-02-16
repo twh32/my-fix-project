@@ -15,7 +15,7 @@ RUN python3 -m pip install --upgrade pip
 # RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
 # Option 2: Install the packages directly.
-RUN python3 -m pip install simplefix pytest flask requests
+RUN python3 -m pip install simplefix pytest flask requests flask-cors
 
 # Expose the port that your internal API will run on.
 EXPOSE 5002

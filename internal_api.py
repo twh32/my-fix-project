@@ -65,6 +65,10 @@ def delete_order(order_id):
         app.logger.error(f"Error in delete_order: {e}")
         return jsonify({"status": "error", "message": "Internal server error"}), 500
 
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "ok"}), 200
+
 if __name__ == '__main__':
     # Run the app on all interfaces on port 5002 with debug mode off.
     app.run(host="0.0.0.0", port=5002, debug=False)
