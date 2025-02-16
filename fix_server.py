@@ -11,7 +11,7 @@ from fix_transform import transform_fix_to_json  # Transformation logic
 # Set heartbeat interval (seconds)
 HEARTBEAT_INTERVAL = 5
 # URL of the internal API (adjust the port if necessary)
-INTERNAL_API_URL = "http://localhost:5001/orders"
+INTERNAL_API_URL = "http://localhost:5002/orders"
 
 def build_execution_report(order_msg):
     """

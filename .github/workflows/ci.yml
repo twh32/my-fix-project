@@ -7,23 +7,36 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.13'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install simplefix pytest flask requests
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install simplefix pytest flask requests
 
-    - name: Run tests
-      run: |
-        pytest --maxfail=1 --disable-warnings -v
+      # Optionally run your tests on your code before building the Docker image.
+      - name: Run tests
+        run: |
+          pytest --maxfail=1 --disable-warnings -v
+
+      - name: Build Docker image
+        run: docker build -t my-fix-project .
+
+      # Optionally, you could add a step to run the container and perform simple checks.
+      - name: Run Docker container and test API
+        run: |
+          docker run -d -p 5002:5002 --name my-fix-container my-fix-project
+          sleep 5
+          curl -v http://localhost:5002/orders || exit 1
+          docker stop my-fix-container
+          docker rm my-fix-container
