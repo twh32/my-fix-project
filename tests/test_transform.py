@@ -1,5 +1,5 @@
-import pytest
 import json
+import pytest
 from fix_transform import transform_fix_to_json, transform_fix_to_json_str
 
 def test_transform_with_all_fields():
