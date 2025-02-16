@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip3 install simplefix pytest flask requests
+          pip3 install simplefix pytest flask requests flask_cors
 
       # Optionally run your tests on your code before building the Docker image.
       - name: Run tests

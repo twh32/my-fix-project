@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import datetime
 import logging
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 # Configure logging to output to the console.
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
