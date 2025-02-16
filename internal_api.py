@@ -69,6 +69,34 @@ def delete_order(order_id):
 def health():
     return jsonify({"status": "ok"}), 200
 
+# New endpoint for logs
+@app.route('/logs', methods=['GET'])
+def get_logs():
+    """
+    Returns simulated log entries based on ingested orders.
+    """
+    try:
+        # For this prototype, generate one log entry per order.
+        logs = [
+            f"Order {order.get('order_id')} ingested at {order.get('ingested_timestamp')}"
+            for order in orders
+        ]
+        if not logs:
+            logs = ["No orders ingested yet."]
+        return jsonify({"status": "success", "logs": logs}), 200
+    except Exception as e:
+        app.logger.error(f"Error in get_logs: {e}")
+        return jsonify({"status": "error", "message": "Internal server error"}), 500
+
+# Serve React app for any other route
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_react_app(path):
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
+
 if __name__ == '__main__':
     # Run the app on all interfaces on port 5002 with debug mode off.
     app.run(host="0.0.0.0", port=5002, debug=False)

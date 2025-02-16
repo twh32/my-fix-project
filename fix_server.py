@@ -108,7 +108,7 @@ def handle_client(conn, addr):
     finally:
         conn.close()
 
-def server_thread(host='localhost', port=5001):
+def server_thread(host='localhost', port=5002):
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_socket.bind((host, port))
