@@ -5,16 +5,15 @@ import threading
 import requests
 import pytest
 from fix_core import build_order_message, reset_sequence
-from fix_server import handle_client  # Ensure your FIX server now pushes to the API via process_fix_message
-from internal_api import app  # Your Flask API code
+from fix_server import handle_client
+from internal_api import app
 
 HOST = "localhost"
 
-# Fixture to start a fresh FIX server on a free port.
+# Fixture to start the FIX server on a free port.
 @pytest.fixture(scope="function")
 def start_fix_server():
-    reset_sequence()  # Reset the global sequence for isolation.
-    # Create a server socket on a free port.
+    reset_sequence()  # Reset global sequence for isolation.
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_socket.bind((HOST, 0))
@@ -36,14 +35,13 @@ def start_fix_server():
     server_socket.close()
     time.sleep(1)
 
-# Fixture to start the internal API server (Flask) on a fixed port (e.g., 5001).
+# Fixture to start the internal API on port 5002.
 @pytest.fixture(scope="function")
 def start_internal_api():
-    port = 5001
-    # Start the Flask app in a separate thread.
+    port = 5002
     thread = threading.Thread(
         target=app.run,
-        kwargs={'debug': False, 'port': port, 'use_reloader': False}
+        kwargs={'host': '0.0.0.0', 'port': port, 'debug': False, 'use_reloader': False}
     )
     thread.setDaemon(True)
     thread.start()
@@ -71,7 +69,8 @@ def test_full_end_to_end_flow(start_fix_server, start_internal_api):
         to the internal API.
       - A GET request to the internal API returns the enriched order.
     """
-    api_port = start_internal_api  # Should be 5001.
+    # Our internal API is running on port 5002.
+    api_port = start_internal_api  # Should be 5002.
     API_URL = f"http://{HOST}:{api_port}/orders"
     
     order_id = "ORDER_E2E"
@@ -89,7 +88,7 @@ def test_full_end_to_end_flow(start_fix_server, start_internal_api):
     client_socket.sendall(order_msg)
     client_socket.close()
     
-    # Wait a bit for the server to process the order and push it to the API.
+    # Wait for the server to process the order and push it to the API.
     time.sleep(3)
     
     # Query the internal API to retrieve orders.
