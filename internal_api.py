@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import datetime
 import logging
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 # Configure logging to output to the console.
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -62,6 +64,10 @@ def delete_order(order_id):
     except Exception as e:
         app.logger.error(f"Error in delete_order: {e}")
         return jsonify({"status": "error", "message": "Internal server error"}), 500
+
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "ok"}), 200
 
 if __name__ == '__main__':
     # Run the app on all interfaces on port 5002 with debug mode off.
