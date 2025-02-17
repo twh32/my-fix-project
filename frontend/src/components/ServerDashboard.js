@@ -4,20 +4,27 @@ import axios from 'axios';
 function ServerDashboard() {
   const [logs, setLogs] = useState([]);
 
-  // For demonstration, let's simulate logs from an API endpoint.
-  // In a real application, you might use WebSocket or polling.
-  useEffect(() => {
-    // Simulate fetching logs every 5 seconds.
-    const interval = setInterval(async () => {
-      try {
-        // Replace this with your actual endpoint for logs.
-        const response = await axios.get('http://localhost:5002/logs');
-        setLogs(response.data.logs);
-      } catch (error) {
-        console.error('Error fetching logs:', error);
-      }
-    }, 5000);
+  // For a prototype, we'll simulate log fetching with an API call.
+  // Ideally, your FIX server could expose a /logs endpoint.
+  const fetchLogs = async () => {
+    try {
+      // Replace this URL with your actual logs endpoint if available.
+      const response = await axios.get('http://localhost:5002/logs');
+      setLogs(response.data.logs);
+    } catch (error) {
+      console.error('Error fetching logs:', error);
+      // For now, we can simulate log data:
+      setLogs(prevLogs => [
+        ...prevLogs,
+        `Log entry at ${new Date().toLocaleTimeString()}: No logs endpoint configured.`
+      ]);
+    }
+  };
 
+  useEffect(() => {
+    fetchLogs();
+    // Poll every 5 seconds for new logs.
+    const interval = setInterval(fetchLogs, 5000);
     return () => clearInterval(interval);
   }, []);
 
