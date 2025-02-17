@@ -1,2 +1,2 @@
 # my-fix-project
-Placeholder text
+Fiddling around with ChatGPT and public fix repos
