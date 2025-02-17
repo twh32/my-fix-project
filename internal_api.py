@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import datetime
 import logging
+import os
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -88,7 +89,7 @@ def get_logs():
         app.logger.error(f"Error in get_logs: {e}")
         return jsonify({"status": "error", "message": "Internal server error"}), 500
 
-# Serve React app for any other route
+# Serve React app for any other route and such and such
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve_react_app(path):
@@ -98,5 +99,5 @@ def serve_react_app(path):
         return send_from_directory(app.static_folder, 'index.html')
 
 if __name__ == '__main__':
-    # Run the app on all interfaces on port 5002 with debug mode off.
-    app.run(host="0.0.0.0", port=5002, debug=False)
+    port = int(os.environ.get("PORT", 5002))
+    app.run(host="0.0.0.0", port=port, debug=False)
