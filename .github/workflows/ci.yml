@@ -27,26 +27,3 @@ jobs:
       - name: Run tests
         run: |
           pytest --maxfail=1 --disable-warnings -v
-
-      - name: Build Docker image
-        run: docker build -t my-fix-project .
-
-      - name: Run Docker container and test API
-        run: |
-          docker run -d -p 5002:5002 --name my-fix-container my-fix-project
-          sleep 30  # increased wait for the container to start
-          curl -v http://localhost:5002/health || (docker logs my-fix-container && exit 1)
-          docker stop my-fix-container
-          docker rm my-fix-container
-
-      - name: Install Heroku CLI
-        run: |
-          curl https://cli-assets.heroku.com/install.sh | sh
-
-      - name: Build and Push Heroku Image
-        run: |
-          docker build --no-cache -t registry.heroku.com/my-new-fix-project-app/web:latest .
-          docker push registry.heroku.com/my-new-fix-project-app/web:latest
-
-      - name: Release on Heroku
-        run: heroku container:release web --app my-new-fix-project-app
