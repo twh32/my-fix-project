@@ -10,21 +10,26 @@ function ClientOrderUI() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const order = {
       order_id: orderId,
-      symbol: symbol,
+      symbol,
       quantity: parseInt(quantity, 10),
       price: parseFloat(price),
       business_unit: 'BU-001',
       trader_id: 'TRADER001',
       risk_category: 'LOW',
-      processed_timestamp: new Date().toISOString()
+      processed_timestamp: new Date().toISOString(),
     };
+
     try {
-      const response = await axios.post('http://localhost:5002/orders', order);
+      // Use a relative path so it calls the same origin (Heroku or local dev).
+      const response = await axios.post('/orders', order);
       setMessage(`Success: ${response.data.message}`);
     } catch (error) {
-      setMessage(`Error: ${error.response ? error.response.data.message : error.message}`);
+      setMessage(`Error: ${
+        error.response ? error.response.data.message : error.message
+      }`);
     }
   };
 
@@ -34,19 +39,40 @@ function ClientOrderUI() {
       <form onSubmit={handleSubmit}>
         <div>
           <label>Order ID:</label>
-          <input type="text" value={orderId} onChange={(e) => setOrderId(e.target.value)} required />
+          <input
+            type="text"
+            value={orderId}
+            onChange={(e) => setOrderId(e.target.value)}
+            required
+          />
         </div>
         <div>
           <label>Symbol:</label>
-          <input type="text" value={symbol} onChange={(e) => setSymbol(e.target.value)} required />
+          <input
+            type="text"
+            value={symbol}
+            onChange={(e) => setSymbol(e.target.value)}
+            required
+          />
         </div>
         <div>
           <label>Quantity:</label>
-          <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
+          <input
+            type="number"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+            required
+          />
         </div>
         <div>
           <label>Price:</label>
-          <input type="number" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} required />
+          <input
+            type="number"
+            step="0.01"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            required
+          />
         </div>
         <button type="submit">Submit Order</button>
       </form>

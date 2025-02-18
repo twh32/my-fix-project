@@ -4,16 +4,14 @@ import axios from 'axios';
 function ServerDashboard() {
   const [logs, setLogs] = useState([]);
 
-  // For a prototype, we'll simulate log fetching with an API call.
-  // Ideally, your FIX server could expose a /logs endpoint.
+  // Fetch logs from the back-end using a relative URL.
   const fetchLogs = async () => {
     try {
-      // Replace this URL with your actual logs endpoint if available.
-      const response = await axios.get('http://localhost:5002/logs');
+      const response = await axios.get('/logs');
       setLogs(response.data.logs);
     } catch (error) {
       console.error('Error fetching logs:', error);
-      // For now, we can simulate log data:
+      // Simulate log data if the endpoint isn't available.
       setLogs(prevLogs => [
         ...prevLogs,
         `Log entry at ${new Date().toLocaleTimeString()}: No logs endpoint configured.`
@@ -31,7 +29,14 @@ function ServerDashboard() {
   return (
     <div>
       <h2>Server Dashboard</h2>
-      <div style={{ border: '1px solid #ccc', padding: '1rem', height: '300px', overflowY: 'scroll' }}>
+      <div
+        style={{
+          border: '1px solid #ccc',
+          padding: '1rem',
+          height: '300px',
+          overflowY: 'scroll'
+        }}
+      >
         {logs.length > 0 ? (
           logs.map((log, index) => <p key={index}>{log}</p>)
         ) : (

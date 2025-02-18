@@ -6,7 +6,8 @@ function InternalSystemUI() {
 
   const fetchOrders = async () => {
     try {
-      const response = await axios.get('http://localhost:5002/orders');
+      // Use a relative URL so that the API call goes to the same origin.
+      const response = await axios.get('/orders');
       setOrders(response.data.orders);
     } catch (error) {
       console.error('Error fetching orders:', error);
