@@ -4,7 +4,10 @@ import datetime
 import logging
 import os
 
-app = Flask(__name__)
+# Set the static folder to be the "static" directory in the project root.
+# This assumes that the "static" folder is at the same level as this file.
+static_path = os.path.join(os.path.dirname(__file__), "static")
+app = Flask(__name__, static_folder=static_path, static_url_path="")
 CORS(app)  # Enable CORS for all routes
 
 # Configure logging to output to the console.
@@ -24,10 +27,10 @@ def receive_order():
         if data is None:
             app.logger.error("Received invalid JSON")
             return jsonify({"status": "error", "message": "Invalid JSON"}), 400
-        
+
         # Add a received timestamp if not already present.
         data.setdefault("ingested_timestamp", datetime.datetime.now(datetime.timezone.utc).isoformat())
-        
+
         orders.append(data)
         app.logger.info(f"Order received: {data}")
         return jsonify({"status": "success", "message": "Order ingested"}), 200
@@ -70,7 +73,6 @@ def delete_order(order_id):
 def health():
     return jsonify({"status": "ok"}), 200
 
-# New endpoint for logs
 @app.route('/logs', methods=['GET'])
 def get_logs():
     """
@@ -89,17 +91,18 @@ def get_logs():
         app.logger.error(f"Error in get_logs: {e}")
         return jsonify({"status": "error", "message": "Internal server error"}), 500
 
-# Serve the React app
+# Catch-all route to serve the React app
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve_react_app(path):
-    # If the requested resource exists, serve it. Otherwise, serve index.html.
     file_path = os.path.join(app.static_folder, path)
+    # Debug prints can help trace issues:
+    app.logger.info(f"Requested path: {path} | Full file path: {file_path}")
     if path != "" and os.path.exists(file_path):
         return send_from_directory(app.static_folder, path)
     else:
         return send_from_directory(app.static_folder, 'index.html')
-                                   
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5002))
     app.run(host="0.0.0.0", port=port, debug=False)
