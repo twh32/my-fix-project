@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import datetime
 import logging
@@ -89,15 +89,17 @@ def get_logs():
         app.logger.error(f"Error in get_logs: {e}")
         return jsonify({"status": "error", "message": "Internal server error"}), 500
 
-# Serve React app for any other route and such and such
+# Serve the React app
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve_react_app(path):
-    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+    # If the requested resource exists, serve it. Otherwise, serve index.html.
+    file_path = os.path.join(app.static_folder, path)
+    if path != "" and os.path.exists(file_path):
         return send_from_directory(app.static_folder, path)
     else:
         return send_from_directory(app.static_folder, 'index.html')
-
+                                   
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5002))
     app.run(host="0.0.0.0", port=port, debug=False)
