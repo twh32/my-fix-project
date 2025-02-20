@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD
 
 on:
   push:
@@ -9,7 +9,12 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-
+    services:
+      rabbitmq:
+        image: rabbitmq:3-management
+        ports:
+          - 5672:5672
+          - 15672:15672
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -22,8 +27,35 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip3 install simplefix pytest flask requests flask-cors
+          pip3 install simplefix pytest flask requests flask-cors pika
 
       - name: Run tests
         run: |
           pytest --maxfail=1 --disable-warnings -v
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: |
+          docker build --no-cache -t registry.heroku.com/my-new-fix-project-app/web:latest .
+
+      - name: Log in to Heroku Container Registry
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          echo "$HEROKU_API_KEY" | docker login --username=_ --password-stdin registry.heroku.com
+
+      - name: Push Docker image to Heroku
+        run: |
+          docker push registry.heroku.com/my-new-fix-project-app/web:latest
+
+      - name: Release on Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          heroku container:release web --app my-new-fix-project-app

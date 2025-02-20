@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Clickable Prototype - Progress Chart</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    header {
+      background: #007BFF;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    main {
+      flex: 1;
+      padding: 1rem;
+    }
+    .hidden {
+      display: none;
+    }
+    .global-nav {
+      display: flex;
+      justify-content: space-around;
+      background: #eee;
+      padding: 1rem;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      border: none;
+      background: #007BFF;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .filter-btn {
+      margin-right: 0.5rem;
+    }
+    .chart {
+      border: 1px solid #ccc;
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+    .empty-state {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="page-title">Progress Chart</h1>
+  </header>
+  <main>
+    <!-- Sufficient Data Screen -->
+    <div id="sufficient-data-screen">
+      <div id="filter-controls">
+        <button class="filter-btn" onclick="applyFilter('All')">All</button>
+        <button class="filter-btn" onclick="applyFilter('Slab')">Slab</button>
+        <button class="filter-btn" onclick="applyFilter('Overhang')">Overhang</button>
+      </div>
+      <div class="chart">
+        <span>Time Series Chart Placeholder</span>
+      </div>
+    </div>
+    
+    <!-- Insufficient Data Screen -->
+    <div id="insufficient-data-screen" class="hidden">
+      <div class="empty-state">
+        <p>Not enough data yet - keep climbing and recording and we'll have something to show you soon.</p>
+      </div>
+    </div>
+  </main>
+  <div class="global-nav">
+    <button onclick="navigate('home')">Home</button>
+    <button onclick="navigate('record')">Record</button>
+    <button onclick="navigate('chart')">Progress Chart</button>
+  </div>
+
+  <script>
+    // Function to simulate navigation and data availability
+    function navigate(page) {
+      if (page === 'chart') {
+        document.getElementById('page-title').innerText = 'Progress Chart';
+        // Simulate data availability: toggle this value to test both screens
+        if (hasSufficientData()) {
+          document.getElementById('sufficient-data-screen').classList.remove('hidden');
+          document.getElementById('insufficient-data-screen').classList.add('hidden');
+        } else {
+          document.getElementById('sufficient-data-screen').classList.add('hidden');
+          document.getElementById('insufficient-data-screen').classList.remove('hidden');
+        }
+      } else {
+        // For simplicity, we'll just alert the navigation for other pages
+        alert("Navigated to " + page);
+      }
+    }
+
+    // Dummy function to simulate whether there is sufficient data
+    function hasSufficientData() {
+      // Set to true for sufficient data; change to false to simulate insufficient data
+      return true;
+    }
+
+    function applyFilter(filter) {
+      alert("Filter applied: " + filter);
+      // In a real prototype, this would re-render the chart with the selected filter.
+    }
+  </script>
+</body>
+</html>

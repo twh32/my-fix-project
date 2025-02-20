@@ -4,8 +4,10 @@ import datetime
 import logging
 import os
 
+# Import the publisher function
+from rabbitmq_publisher import publish_order
+
 # Set the static folder to be the "static" directory in the project root.
-# This assumes that the "static" folder is at the same level as this file.
 static_path = os.path.join(os.path.dirname(__file__), "static")
 app = Flask(__name__, static_folder=static_path, static_url_path="")
 CORS(app)  # Enable CORS for all routes
@@ -13,13 +15,14 @@ CORS(app)  # Enable CORS for all routes
 # Configure logging to output to the console.
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-# In-memory store for orders
+# In-memory store for orders (for internal UI display)
 orders = []
 
 @app.route('/orders', methods=['POST'])
 def receive_order():
     """
-    Receives enriched FIX data in JSON format, stores it, and returns a success response.
+    Receives enriched FIX data in JSON format, stores it in memory, 
+    publishes it to RabbitMQ, and returns a success response.
     """
     try:
         # Parse JSON data from the request using silent=True.
@@ -31,8 +34,14 @@ def receive_order():
         # Add a received timestamp if not already present.
         data.setdefault("ingested_timestamp", datetime.datetime.now(datetime.timezone.utc).isoformat())
 
+        # Store the order in memory (for UI display purposes)
         orders.append(data)
         app.logger.info(f"Order received: {data}")
+
+        # Publish the order to RabbitMQ
+        publish_order(data)
+        app.logger.info(f"Order published to RabbitMQ: {data.get('order_id')}")
+
         return jsonify({"status": "success", "message": "Order ingested"}), 200
     except Exception as e:
         app.logger.error(f"Error in receive_order: {e}")
@@ -79,7 +88,7 @@ def get_logs():
     Returns simulated log entries based on ingested orders.
     """
     try:
-        # For this prototype, generate one log entry per order.
+        # Generate one log entry per order.
         logs = [
             f"Order {order.get('order_id')} ingested at {order.get('ingested_timestamp')}"
             for order in orders
@@ -96,7 +105,6 @@ def get_logs():
 @app.route('/<path:path>')
 def serve_react_app(path):
     file_path = os.path.join(app.static_folder, path)
-    # Debug prints can help trace issues:
     app.logger.info(f"Requested path: {path} | Full file path: {file_path}")
     if path != "" and os.path.exists(file_path):
         return send_from_directory(app.static_folder, path)
