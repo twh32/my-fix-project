@@ -1,4 +1,4 @@
-name: CI/CD
+name: CI
 
 on:
   push:
@@ -15,6 +15,7 @@ jobs:
         ports:
           - 5672:5672
           - 15672:15672
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -40,22 +41,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Build Docker image
-        run: |
-          docker build --no-cache -t registry.heroku.com/my-new-fix-project-app/web:latest .
-
-      - name: Log in to Heroku Container Registry
+      # Deploy via Heroku Git push with buildpack
+      - name: Deploy to Heroku using Buildpacks
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
-          echo "$HEROKU_API_KEY" | docker login --username=_ --password-stdin registry.heroku.com
-
-      - name: Push Docker image to Heroku
-        run: |
-          docker push registry.heroku.com/my-new-fix-project-app/web:latest
-
-      - name: Release on Heroku
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        run: |
-          heroku container:release web --app my-new-fix-project-app
+          heroku git:remote --app my-new-fix-project-app
+          git push heroku main
