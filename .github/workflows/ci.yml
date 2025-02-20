@@ -34,17 +34,19 @@ jobs:
         run: |
           pytest --maxfail=1 --disable-warnings -v
 
-  deploy:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+deploy:
+  needs: build-and-test
+  runs-on: ubuntu-latest
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      # Deploy via Heroku Git push with buildpack
-      - name: Deploy to Heroku using Buildpacks
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        run: |
-          heroku git:remote --app my-new-fix-project-app
-          git push heroku main
+    - name: Install Heroku CLI
+      run: curl https://cli-assets.heroku.com/install.sh | sh
+
+    - name: Deploy to Heroku using Buildpacks
+      env:
+        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      run: |
+        heroku git:remote --app my-new-fix-project-app
+        git push heroku main
