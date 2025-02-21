@@ -25,7 +25,7 @@ def build_execution_report(order_msg):
     for tag, value in order_msg:
         if tag == 11:
             cl_ord_id = value
-        if tag == 34:
+        elif tag == 34:
             try:
                 msg_seq_num = int(value)
             except ValueError:
@@ -60,21 +60,27 @@ def send_heartbeat(conn):
     except Exception as e:
         logger.error(f"Error sending heartbeat: {e}")
 
-def process_order_and_publish(msg):
+def process_order(msg):
     """
-    Transforms the FIX message into enriched data and publishes it to RabbitMQ.
+    Transforms the FIX message into enriched JSON data and publishes it to RabbitMQ.
     """
     enriched_data = transform_fix_to_json(msg)
     try:
         publish_order(enriched_data)
-        logger.info(f"Enriched order published to RabbitMQ: {enriched_data.get('order_id')}")
+        logger.info("Published to RabbitMQ: %s", enriched_data.get("order_id"))
     except Exception as e:
-        logger.error(f"Exception while publishing order to RabbitMQ: {e}")
+        logger.error("Failed to publish to RabbitMQ: %s", e)
 
 def handle_client(conn, addr):
+    """
+    Handles a connected FIX client:
+      - Receives messages,
+      - Sends an execution report for each message,
+      - Processes the message by publishing to RabbitMQ.
+      - Sends heartbeats when no data is received.
+    """
     logger.info(f"Connected by {addr}")
     parser = simplefix.FixParser()
-    last_activity = time.time()
     try:
         while True:
             # Wait for data with a timeout equal to HEARTBEAT_INTERVAL.
@@ -84,7 +90,6 @@ def handle_client(conn, addr):
                 if not data:
                     logger.info(f"Client {addr} disconnected.")
                     break
-                last_activity = time.time()
                 parser.append_buffer(data)
                 while True:
                     msg = parser.get_message()
@@ -99,12 +104,11 @@ def handle_client(conn, addr):
                         conn.sendall(response)
                     except Exception as e:
                         logger.error(f"Error sending execution report: {e}")
-                    # Process the FIX message and publish the enriched order to RabbitMQ.
-                    process_order_and_publish(msg)
+                    # Process the message and publish to RabbitMQ.
+                    process_order(msg)
             else:
                 # Timeout reached; send heartbeat.
                 send_heartbeat(conn)
-                last_activity = time.time()
     except Exception as e:
         logger.error(f"Error in handle_client for {addr}: {e}")
     finally:

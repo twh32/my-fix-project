@@ -7,8 +7,10 @@ import pika
 
 from fix_core import build_order_message, reset_sequence
 from fix_server import handle_client
-from internal_api import app
 from rabbitmq_publisher import get_rabbitmq_connection  # For connecting to RabbitMQ
+from internal_api import create_app
+
+app = create_app()
 
 HOST = "localhost"
 QUEUE_NAME = "orders"
