@@ -7,8 +7,10 @@ import os
 # Import the publisher function
 from rabbitmq_publisher import publish_order
 
-# Set the static folder to be the "static" directory in the project root.
+# Determine the path to the static directory (assumed to be in the project root)
 static_path = os.path.join(os.path.dirname(__file__), "static")
+
+# Initialize the Flask app with static folder settings.
 app = Flask(__name__, static_folder=static_path, static_url_path="")
 CORS(app)  # Enable CORS for all routes
 
@@ -22,36 +24,36 @@ orders = []
 @app.route('/orders', methods=['POST'])
 def receive_order():
     """
-    Receives enriched FIX data in JSON format, stores it in memory, 
+    Receives enriched FIX data in JSON format, stores it in memory,
     publishes it to RabbitMQ, and returns a success response.
     """
     try:
-        # Parse JSON data from the request using silent=True.
+        # Parse JSON data from the request.
         data = request.get_json(silent=True)
         if data is None:
             logger.error("Received invalid JSON")
             return jsonify({"status": "error", "message": "Invalid JSON"}), 400
 
-        # Add a received timestamp if not already present.
+        # Add a timestamp if not provided.
         data.setdefault("ingested_timestamp", datetime.datetime.now(datetime.timezone.utc).isoformat())
 
         # Store the order in memory (for UI display purposes)
         orders.append(data)
         logger.info(f"Order received: {data}")
 
-        # Publish the order to RabbitMQ
+        # Publish the order to RabbitMQ.
         try:
             publish_order(data)
             logger.info(f"Order published to RabbitMQ: {data.get('order_id')}")
         except Exception as pub_err:
-            # Log the error, but decide whether you want to fail the request or not.
+            # If publishing fails, log the error.
             logger.error(f"Failed to publish order to RabbitMQ: {pub_err}")
-            # Option 1: Return an error so that the caller knows something went wrong.
+            # Decide here whether to fail the request or simply log the error.
+            # For now, we continue and return success.
             # return jsonify({"status": "error", "message": "Order ingested but failed to publish"}), 500
-            # Option 2: Proceed with a success response (if you prefer to decouple order ingestion from MQ publishing).
-            pass
 
         return jsonify({"status": "success", "message": "Order ingested"}), 200
+
     except Exception as e:
         logger.error(f"Error in receive_order: {e}")
         return jsonify({"status": "error", "message": "Internal server error"}), 500
@@ -89,6 +91,9 @@ def delete_order(order_id):
 
 @app.route('/health', methods=['GET'])
 def health():
+    """
+    Health-check endpoint.
+    """
     return jsonify({"status": "ok"}), 200
 
 @app.route('/logs', methods=['GET'])
@@ -97,7 +102,7 @@ def get_logs():
     Returns simulated log entries based on ingested orders.
     """
     try:
-        # Generate one log entry per order.
+        # Generate a log entry for each order.
         logs = [
             f"Order {order.get('order_id')} ingested at {order.get('ingested_timestamp')}"
             for order in orders
@@ -109,10 +114,14 @@ def get_logs():
         logger.error(f"Error in get_logs: {e}")
         return jsonify({"status": "error", "message": "Internal server error"}), 500
 
-# Catch-all route to serve the React app
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve_react_app(path):
+    """
+    Serves static files for the React application.
+    If the requested file exists, it is served directly;
+    otherwise, index.html is served to allow client-side routing.
+    """
     file_path = os.path.join(app.static_folder, path)
     logger.info(f"Requested path: {path} | Full file path: {file_path}")
     if path != "" and os.path.exists(file_path):
