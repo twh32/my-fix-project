@@ -83,3 +83,5 @@ def start_order_consumer(queue_name: str = "orders"):
 
 if __name__ == '__main__':
     start_order_consumer()
+
+__all__ = ["start_order_consumer", "get_rabbitmq_connection"]

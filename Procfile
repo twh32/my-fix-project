@@ -1,2 +1,2 @@
 web: python3 internal_api.py
-worker: python rabbitmq_consumer.py
+worker: python3 rabbitmq_consumer.py

@@ -3,7 +3,6 @@ import time
 import threading
 import pytest
 import logging
-
 import pika
 from rabbitmq_consumer import get_rabbitmq_connection, start_order_consumer
 
