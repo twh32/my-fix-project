@@ -3,34 +3,16 @@ import time
 import pytest
 from rabbitmq_publisher import publish_order, get_rabbitmq_connection
 
-@pytest.fixture
-def rabbitmq_connection():
-    """
-    Create and yield a RabbitMQ connection for tests.
-    """
-    connection = get_rabbitmq_connection()
-    yield connection
-    connection.close()
-
-def test_publish_order(rabbitmq_connection):
-    """
-    Verifies an order is published to RabbitMQ.
-    
-    Steps:
-      1. Declare and purge a test queue.
-      2. Publish a test order.
-      3. Wait briefly to allow the message to be enqueued.
-      4. Retrieve the message from the queue.
-      5. Assert that the message contains the expected order ID.
-      6. Acknowledge and purge the queue for cleanup.
-    """
+def test_publish_order():
     test_queue = "test_orders"
-    channel = rabbitmq_connection.channel()
     
-    # Declare the queue and purge any old messages.
-    channel.queue_declare(queue=test_queue, durable=True)
-    channel.queue_purge(queue=test_queue)
-    
+    # First, use a new connection to declare and purge the test queue.
+    init_conn = get_rabbitmq_connection()
+    init_channel = init_conn.channel()
+    init_channel.queue_declare(queue=test_queue, durable=True)
+    init_channel.queue_purge(queue=test_queue)
+    init_conn.close()
+
     # Define a test order.
     test_order = {
         "order_id": "TEST123",
@@ -43,20 +25,31 @@ def test_publish_order(rabbitmq_connection):
         "processed_timestamp": "2025-02-18T00:00:00Z"
     }
     
-    # Publish the test order.
+    # Publish the test order using the publisher function.
     publish_order(test_order, queue_name=test_queue)
     
-    # Wait a bit longer (e.g. 2 seconds) to ensure the message is enqueued.
+    # Wait a short while to ensure the message is enqueued.
     time.sleep(2)
     
-    # Retrieve the message.
-    method_frame, header_frame, body = channel.basic_get(queue=test_queue, auto_ack=False)
+    # Create a new connection and channel to retrieve the message.
+    check_conn = get_rabbitmq_connection()
+    check_channel = check_conn.channel()
+    check_channel.queue_declare(queue=test_queue, durable=True)
+    
+    method_frame, header_frame, body = None, None, None
+    for _ in range(5):
+        time.sleep(1)
+        method_frame, header_frame, body = check_channel.basic_get(queue=test_queue, auto_ack=True)
+        if method_frame is not None:
+            break
+
+    # Assert that a message was indeed published.
     assert method_frame is not None, "No message was published to the queue."
     
-    # Verify the contents of the message.
+    # Decode and verify the message.
     order_received = json.loads(body)
     assert order_received.get("order_id") == "TEST123", "Order ID does not match the test order."
     
-    # Acknowledge the message and purge the queue.
-    channel.basic_ack(method_frame.delivery_tag)
-    channel.queue_purge(queue=test_queue)
+    # Clean up by purging the test queue.
+    check_channel.queue_purge(queue=test_queue)
+    check_conn.close()
