@@ -47,10 +47,11 @@ def create_app(test_config=None):
 
     # Database configuration: use DATABASE_URL if provided (e.g., on Heroku),
     # otherwise fall back to a local database.
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
-        'DATABASE_URL',
-        'postgresql://localhost/my_test_db'
-    )
+    uri = os.environ.get('DATABASE_URL', 'postgresql://localhost/my_test_db')
+    # Heroku returns a URI that starts with "postgres://"; SQLAlchemy expects "postgresql://"
+    if uri.startswith("postgres://"):
+        uri = uri.replace("postgres://", "postgresql://", 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = uri
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # Initialize SQLAlchemy and Flask-Migrate
