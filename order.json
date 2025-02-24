@@ -1,0 +1,10 @@
+{
+    "order_id": "LOADTEST",
+    "symbol": "AAPL",
+    "quantity": 100,
+    "price": 150.00,
+    "business_unit": "BU-LOAD",
+    "trader_id": "TRADER_LOAD",
+    "risk_category": "MEDIUM",
+    "processed_timestamp": "2025-02-21T00:00:00Z"
+  }

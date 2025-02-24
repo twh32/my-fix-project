@@ -18,6 +18,19 @@ jobs:
         ports:
           - 5672:5672
           - 15672:15672
+      postgres:
+        image: postgres:14
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: my_test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -30,9 +43,11 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip3 install simplefix pytest flask requests flask-cors pika
+          pip3 install simplefix pytest flask requests flask-cors pika Flask-SQLAlchemy Flask-Migrate psycopg2-binary
 
       - name: Run tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/my_test_db
         run: |
           pytest --maxfail=1 --disable-warnings -v
 
